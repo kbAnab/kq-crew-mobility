@@ -1,4 +1,3 @@
-
 import json
 import logging
 from typing import List, Optional
@@ -7,7 +6,7 @@ from fastapi import Depends, FastAPI, Header, HTTPException
 from firebase_admin import auth
 from pydantic import BaseModel, Field
 
-from config import QUALIFICATIONS
+from services.config import QUALIFICATIONS
 from recommender import CrewRecommender
 from services.crew_service import get_candidates, get_flight
 from services.eligibility_service import candidates_to_frame, flight_type_of
@@ -61,7 +60,6 @@ class FlightRecommendationRequest(BaseModel):
 # ---------------------------------------
 
 def verify_controller(authorization: str = Header(...)) -> str:
-    """Accept only an active CREW_CONTROLLER or MANAGER with a valid Firebase ID token."""
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Firebase authentication token")
 
@@ -87,9 +85,6 @@ def verify_controller(authorization: str = Header(...)) -> str:
     return uid
 
 
-# ---------------------------------------
-# BASIC ENDPOINTS
-# ---------------------------------------
 
 @app.get("/")
 def home():
@@ -106,12 +101,8 @@ def health():
     return {"status": "healthy", "model_loaded": True, "firebase_connected": firebase_connected}
 
 
-# ---------------------------------------
-# RECOMMENDATIONS
-# ---------------------------------------
 
 def _to_records(results: pd.DataFrame) -> list:
-    # going through JSON turns numpy numbers into plain Python numbers
     return json.loads(results.to_json(orient="records"))
 
 
@@ -143,7 +134,6 @@ def recommend_crew(request: RecommendationRequest, uid: str = Depends(verify_con
 
 @app.post("/recommend/flight")
 def recommend_for_flight(request: FlightRecommendationRequest, uid: str = Depends(verify_controller)):
-    """Load the flight and its candidate crew from Firestore, then rank them."""
     try:
         db = get_db()
         flight = get_flight(db, request.flight_id)

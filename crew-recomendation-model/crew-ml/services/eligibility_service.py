@@ -1,7 +1,6 @@
-"""Turns Firestore documents into the table the recommender expects."""
 import pandas as pd
 
-from config import QUALIFICATIONS
+from services.config import QUALIFICATIONS
 
 
 def flight_type_of(flight: dict) -> str:
@@ -9,10 +8,7 @@ def flight_type_of(flight: dict) -> str:
 
 
 def candidates_to_frame(docs: list[dict]) -> pd.DataFrame:
-    """
-    One row per crew member. Missing numbers default to values that fail the hard rules
-    (no rest, long duty), so incomplete records are never recommended by accident.
-    """
+    
     rows = []
     for d in docs:
         qualification = d.get("qualification", "")

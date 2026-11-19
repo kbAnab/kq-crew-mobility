@@ -1,7 +1,7 @@
 import argparse
 from datetime import datetime, time, timedelta, timezone
 
-EAT = timezone(timedelta(hours=3))   # Kenya (no daylight saving)
+EAT = timezone(timedelta(hours=3))   
 
 
 def at(day_offset: int, hhmm: str) -> datetime:
@@ -12,7 +12,6 @@ def at(day_offset: int, hhmm: str) -> datetime:
 
 
 def build_flights() -> dict:
-    # IDs match the demo flights in the app (ControllerStore) so both line up.
     rows = [
         ("KQ600-CPT", "KQ600", "NBO – MBA", 1, "14:05", "Captain", 1, 0, False),
         ("KQ600-FO", "KQ600", "NBO – MBA", 1, "14:05", "First Officer", 1, 1, False),
@@ -116,7 +115,6 @@ def build_assignments() -> dict:
 
 
 def build_policies() -> dict:
-    # PLACEHOLDER limits: replace with KCAA / Operations Manual values.
     return {"policies": {
         "domestic": {"maxDutyHours": 12, "minRestHours": 10, "minExperienceYears": 1},
         "international": {"maxDutyHours": 11, "minRestHours": 12, "minExperienceYears": 3},
@@ -124,7 +122,6 @@ def build_policies() -> dict:
 
 
 def build_duties() -> dict:
-    # day offset, id, type, title, start, end, flight info
     rows = [
         (0, "d0a", "FLIGHT", "NBO – MBA", "14:05", "15:15", "KQ600 / 5Y-KYA"),
         (0, "d0b", "FLIGHT", "MBA – NBO", "16:00", "17:10", "KQ601 / 5Y-KYA"),
@@ -140,7 +137,7 @@ def build_duties() -> dict:
     for day, did, typ, title, s, e, info in rows:
         start = at(day, s)
         end = at(day, e)
-        if end <= start:                    # overnight flight lands the next day
+        if end <= start:                    
             end += timedelta(days=1)
         out[did] = {"type": typ, "title": title, "time": f"{s} - {e}", "flightInfo": info,
                     "start": start, "end": end}
@@ -164,7 +161,7 @@ def main():
     if args.email and not args.dry_run:
         from firebase_admin import auth
         from services.firebase_service import get_db
-        get_db()                                    # initialise the Admin SDK
+        get_db()                                   
         try:
             uid = auth.get_user_by_email(args.email).uid
         except Exception as e:

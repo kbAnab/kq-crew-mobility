@@ -17,7 +17,6 @@ NUMERIC = ["experience_years", "flight_hours", "duty_hours", "rest_hours"]
 
 
 def eligible_mask(crew, flight_type, qualification):
-    """Hard operational constraints. Rules decide WHO MAY fly; the model ranks who SHOULD."""
     r = RULES[flight_type]
     return (
         (crew["availability"] == 1)

@@ -1,7 +1,7 @@
 import os
 import numpy as np
 import pandas as pd
-from config import QUALIFICATIONS, SLOTS, eligible_mask
+from services.config import QUALIFICATIONS, SLOTS, eligible_mask
 
 rng = np.random.default_rng(42)
 N_CREW, N_FLIGHTS, POOL_SIZE = 300, 1000, 30
@@ -34,7 +34,6 @@ for flight_id in range(1, N_FLIGHTS + 1):
 
     duty = np.round(rng.uniform(0, 13, POOL_SIZE), 2)
     pool["duty_hours"] = duty
-    # more recent duty -> less rest (instead of two unrelated random numbers)
     pool["rest_hours"] = np.round(np.clip(rng.normal(14 - 0.4 * duty, 3), 4, 24), 2)
     pool["availability"] = rng.choice([0, 1], size=POOL_SIZE, p=[0.15, 0.85])
     pool["flight_id"] = flight_id
@@ -42,7 +41,6 @@ for flight_id in range(1, N_FLIGHTS + 1):
     pool["required_qualification"] = required_q
     pool["slots"] = SLOTS[required_q]
 
-    # simulated dispatcher preference (hidden from the model); experience matters more on long haul
     w_exp = 0.6 if flight_type == "International" else 0.4
     score = (w_exp * pool.experience_years + 0.3 * pool.rest_hours
              - 0.5 * pool.duty_hours + rng.normal(0, 1.5, POOL_SIZE))

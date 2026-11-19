@@ -29,10 +29,10 @@ NUMERIC = [
 
 FEATURES = CATEGORICAL + NUMERIC
 
-# Train ONLY on crew who pass the hard rules - exactly what the recommender sees at inference.
+
 df = df[df.eligible == 1].reset_index(drop=True)
 
-# Split by FLIGHT so candidates from one flight never appear in both train and test.
+
 splitter = GroupShuffleSplit(n_splits=1, test_size=0.2, random_state=42)
 train_idx, test_idx = next(splitter.split(df, groups=df.flight_id))
 train, test = df.iloc[train_idx], df.iloc[test_idx].copy()
@@ -50,11 +50,11 @@ pipeline.fit(train[FEATURES], train.assigned)
 test["p"] = pipeline.predict_proba(test[FEATURES])[:, 1]
 print("ROC-AUC:", round(roc_auc_score(test.assigned, test.p), 3))
 
-# The metric that matters: in each flight, do the model's top-k picks match the dispatcher's?
+
 hits, baseline = [], []
 for _, g in test.groupby("flight_id"):
     k = int(g.slots.iloc[0])
-    if len(g) <= k:           # nothing to choose between
+    if len(g) <= k:           
         continue
     hits.append(g.nlargest(k, "p").assigned.mean())
     baseline.append(k / len(g))

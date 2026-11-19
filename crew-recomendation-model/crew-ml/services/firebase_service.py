@@ -1,4 +1,3 @@
-"""Firebase Admin / Firestore access, created lazily so importing this module never fails."""
 import os
 from pathlib import Path
 
@@ -10,11 +9,6 @@ _db = None
 
 
 def _credential():
-    """
-    1. GOOGLE_APPLICATION_CREDENTIALS pointing at a key file (local development)
-    2. serviceAccountKey.json next to api.py (local development, never commit it)
-    3. Application Default Credentials (Cloud Run / Compute Engine service account)
-    """
     env_path = os.environ.get("GOOGLE_APPLICATION_CREDENTIALS")
     if env_path and Path(env_path).is_file():
         return credentials.Certificate(env_path)
@@ -24,7 +18,6 @@ def _credential():
 
 
 def get_db():
-    """Return the shared Firestore client, initialising the Admin SDK on first use."""
     global _db
     if _db is None:
         if not firebase_admin._apps:

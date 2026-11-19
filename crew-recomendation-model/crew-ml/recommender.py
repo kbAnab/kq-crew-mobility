@@ -4,14 +4,14 @@ import joblib
 import numpy as np
 import pandas as pd
 
-from config import (
+from services.config import (
     QUALIFICATIONS,
     SLOTS,
     RULES,
     eligible_mask
 )
 
-# Must match train_model.py exactly
+
 CATEGORICAL = [
     "qualification",
     "crew_type",
