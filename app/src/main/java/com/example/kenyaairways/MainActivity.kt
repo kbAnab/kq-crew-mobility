@@ -21,6 +21,7 @@ import com.google.firebase.auth.FirebaseAuth
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+
 class MainActivity : AppCompatActivity() {
 
     // Represents one item in the bottom navigation.
@@ -42,6 +43,7 @@ class MainActivity : AppCompatActivity() {
         private const val M_USERS = 104
         private const val M_LOGOUT = 105
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
