@@ -1,0 +1,8 @@
+.git
+**/serviceAccountKey.json
+**/.env
+**/__pycache__
+**/.venv
+app
+.gradle
+build

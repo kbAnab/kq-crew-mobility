@@ -1,1 +1,17 @@
-# ics-proj2_2026
+# Kenya Airways Crew Allocation Android App
+
+## Firebase setup
+
+Deploy `firestore.rules` to the Firebase project before using registration or admin features. The first administrator must be provisioned through the Firebase Console (set their `users/{uid}` profile to `role: "ADMIN"` and `active: true`); public registration can only create active `FLIGHT_CREW` profiles. Other sign-up role choices are requests and do not grant access until an administrator approves them in User Management.
+
+The rules cover the collections represented by the current Android code: `users/{uid}`, `users/{uid}/duties`, and `availability/{uid}`. Other collections are denied because this repository does not define their schemas or authorization requirements.
+
+## Recommendation service
+
+The existing FastAPI service and trained scikit-learn artifact are in `crew-recomendation-model/crew-ml` and `crew-recomendation-model/models/crew_recommender.pkl`. The service loads Firestore `flights/{flightId}`, candidate documents from `crew`, and reads the model through `CrewRecommender`. Its eligibility service applies availability, position qualification, experience, duty, and rest constraints before ranking. The Android client calls `POST /recommend/flight` with `flight_id` and optional `top_n`, includes the Firebase ID token as a bearer token, and parses the actual model score and explanation. Configure the service URL in `app/src/main/res/values/strings.xml` (`recommendation_base_url`); non-local HTTP URLs are rejected.
+
+The Android scheduler loads flights from the service, requests model results, checks returned values, and submits a selected crew member for review. The service stores the pending request in `assignments`, lists pending records, and applies approve/reject decisions transactionally. Approval rechecks eligibility and capacity, updates `flights.filled/status`, marks the crew document unavailable, and closes the assignment record. Assignment writes require an active `CREW_CONTROLLER` or `ADMIN` profile. Managers can read recommendation, flight, and pending-review summaries but cannot submit or decide assignments. Alerts, compliance, notifications, and reports use the corresponding Firestore collections through authenticated service routes.
+
+The training pipeline uses generated synthetic assignment data (`generate_data.py`); the model is connected, but its training data is not real Kenya Airways operational history. Manager-editable limits are shared through `settings/policies` and can only tighten the model's default duty/rest/experience thresholds. These are project rules, not a verified statement of current aviation regulations. The current Firestore `crew` schema has no aircraft-specific certification or licence validity fields, so those constraints cannot be validated. Reavailability after duty completion and crew identity mapping to Firebase users also need operational data/backend support. Do not use this capstone model for live dispatch without validated data and domain review.
+
+Run the service from `crew-recomendation-model/crew-ml` with its requirements installed and Firebase Admin credentials provided through `GOOGLE_APPLICATION_CREDENTIALS` or the runtime's Application Default Credentials. No service account key is included. A deployed HTTPS endpoint and populated `flights`, `crew`, `users`, `assignments`, `alerts`, `compliance`, and `notifications` records are required for live operation.
