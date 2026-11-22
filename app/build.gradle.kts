@@ -46,6 +46,8 @@ dependencies {
     implementation(libs.firebase.auth)
     implementation(platform("com.google.firebase:firebase-bom:35.1.0"))
     implementation("com.google.firebase:firebase-firestore")
+    implementation("com.google.firebase:firebase-messaging")
+    implementation("com.google.firebase:firebase-installations")
     implementation(libs.firebase.storage)
     implementation(libs.googleid)
     implementation(libs.material)
