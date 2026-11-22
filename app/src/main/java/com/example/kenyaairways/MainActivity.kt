@@ -11,6 +11,11 @@ import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import android.widget.Toast
+import android.Manifest
+import android.content.pm.PackageManager
+import android.os.Build
+import androidx.activity.result.contract.ActivityResultContracts
+import androidx.core.content.ContextCompat
 import com.example.kenyaairways.auth.LoginFragment
 import com.example.kenyaairways.common.*
 import com.example.kenyaairways.crewcontroller.*
@@ -19,11 +24,21 @@ import com.example.kenyaairways.databinding.FragmentPlaceholderBinding
 import com.example.kenyaairways.flightcrew.*
 import com.example.kenyaairways.manager.*
 import com.google.firebase.auth.FirebaseAuth
+import com.example.kenyaairways.notifications.PushNotifications
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
 
 class MainActivity : AppCompatActivity() {
+
+    private val notificationPermission = registerForActivityResult(
+        ActivityResultContracts.RequestPermission()
+    ) { granted ->
+        getSharedPreferences("settings", MODE_PRIVATE).edit().putBoolean("push", granted).apply()
+        if (granted) PushNotifications.syncToken(this)
+        (supportFragmentManager.findFragmentById(R.id.container) as? SettingsFragment)
+            ?.reflectPushPermissionResult(granted)
+    }
 
     // Represents one item in the bottom navigation.
     private class Dest(
@@ -122,8 +137,16 @@ class MainActivity : AppCompatActivity() {
 
     /** Sign out of Firebase and return to the login screen. */
     fun logout() {
-        FirebaseAuth.getInstance().signOut()
-        showLogin()
+        PushNotifications.unregisterCurrentToken {
+            FirebaseAuth.getInstance().signOut()
+            showLogin()
+        }
+    }
+
+    fun requestNotificationPermission() {
+        if (Build.VERSION.SDK_INT >= 33) {
+            notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+        }
     }
 
     fun showHome() {
@@ -144,6 +167,17 @@ class MainActivity : AppCompatActivity() {
         binding.bottomNav.menu.getItem(0).isChecked = true
 
         show(destinations[0])
+
+        if (PushNotifications.isEnabled(this)) {
+            if (Build.VERSION.SDK_INT >= 33 && ContextCompat.checkSelfPermission(
+                    this, Manifest.permission.POST_NOTIFICATIONS
+                ) != PackageManager.PERMISSION_GRANTED
+            ) {
+                notificationPermission.launch(Manifest.permission.POST_NOTIFICATIONS)
+            } else {
+                PushNotifications.syncToken(this)
+            }
+        }
 
         invalidateOptionsMenu()
     }

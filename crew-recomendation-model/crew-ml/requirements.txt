@@ -4,5 +4,5 @@ scikit-learn
 joblib
 fastapi
 uvicorn[standard]
-firebase-admin
+firebase-admin>=7.5.0
 pydantic

@@ -6,7 +6,7 @@ from typing import List, Optional, Literal
 from zoneinfo import ZoneInfo
 
 from fastapi import Depends, FastAPI, Header, HTTPException
-from firebase_admin import auth
+from firebase_admin import auth, messaging
 from pydantic import BaseModel, Field
 from google.cloud import firestore
 from google.cloud.firestore_v1.base_query import FieldFilter
@@ -69,6 +69,10 @@ class AssignmentRequest(BaseModel):
 
 class AssignmentDecision(BaseModel):
     action: Literal["approve", "reject"]
+
+
+class InstallationRequest(BaseModel):
+    installation_id: str = Field(min_length=10, max_length=256)
 
 
 # ---------------------------------------
@@ -481,20 +485,35 @@ def decide_assignment(assignment_id: str, decision: AssignmentDecision, uid: str
             "reviewedAt": firestore.SERVER_TIMESTAMP,
         })
         crew_uid = assignment.get("crewUid") or crew.get("uid")
+        push_notice = None
         if crew_uid:
             notification_ref = db.collection("notifications").document()
             approved = decision.action == "approve"
+            title = "Assignment approved" if approved else "Assignment declined"
+            message_text = f"Your request for {flight.get('flightNo', assignment.get('flightId', 'a flight'))} was {'approved' if approved else 'declined'}."
             tx.create(notification_ref, {
                 "userId": str(crew_uid),
-                "title": "Assignment approved" if approved else "Assignment declined",
-                "message": f"Your request for {flight.get('flightNo', assignment.get('flightId', 'a flight'))} was {'approved' if approved else 'declined'}.",
+                "title": title,
+                "message": message_text,
                 "read": False,
                 "createdAt": firestore.SERVER_TIMESTAMP,
             })
-        return {"id": assignment_id, "status": "approved" if decision.action == "approve" else "rejected"}
+            push_notice = {
+                "uid": str(crew_uid),
+                "notification_id": notification_ref.id,
+                "title": title,
+                "body": message_text,
+            }
+        return {
+            "id": assignment_id,
+            "status": "approved" if decision.action == "approve" else "rejected",
+            "push": push_notice,
+        }
 
     try:
-        return apply_decision(transaction)
+        result = apply_decision(transaction)
+        _send_push_notification(result.pop("push", None))
+        return result
     except HTTPException:
         raise
     except Exception:
@@ -504,6 +523,36 @@ def decide_assignment(assignment_id: str, decision: AssignmentDecision, uid: str
 
 def _time_text(value) -> str:
     return value.isoformat() if hasattr(value, "isoformat") else str(value or "")
+
+
+def _send_push_notification(notice: dict | None) -> None:
+    """Send best-effort FCM after the assignment transaction commits."""
+    if not notice:
+        return
+    try:
+        user_ref = get_db().collection("users").document(notice["uid"])
+        profile = user_ref.get().to_dict() or {}
+        tokens = profile.get("fcmInstallationIds", [])
+        if not isinstance(tokens, list):
+            return
+        for token in set(str(value) for value in tokens if value):
+            try:
+                messaging.send(messaging.Message(
+                    data={
+                        "notification_id": str(notice["notification_id"]),
+                        "title": str(notice["title"]),
+                        "body": str(notice["body"]),
+                    },
+                    fid=token,
+                    android=messaging.AndroidConfig(priority="high"),
+                ))
+            except messaging.UnregisteredError:
+                user_ref.update({"fcmInstallationIds": firestore.ArrayRemove([token])})
+            except Exception:
+                log.exception("Could not send assignment push notification")
+    except Exception:
+        # The Firestore assignment and in-app notification have already committed.
+        log.exception("Could not load notification device tokens")
 
 
 @app.get("/alerts")
@@ -584,6 +633,30 @@ def list_notifications(uid: str = Depends(verify_active_user)):
     except Exception:
         log.exception("Could not load notifications")
         raise HTTPException(status_code=503, detail="Notifications unavailable")
+
+
+@app.post("/devices/token")
+def register_device_token(request: InstallationRequest, uid: str = Depends(verify_active_user)):
+    try:
+        get_db().collection("users").document(uid).update({
+            "fcmInstallationIds": firestore.ArrayUnion([request.installation_id]),
+        })
+        return {"registered": True}
+    except Exception:
+        log.exception("Could not register push token")
+        raise HTTPException(status_code=503, detail="Push token registration failed")
+
+
+@app.delete("/devices/token")
+def unregister_device_token(request: InstallationRequest, uid: str = Depends(verify_active_user)):
+    try:
+        get_db().collection("users").document(uid).update({
+            "fcmInstallationIds": firestore.ArrayRemove([request.installation_id]),
+        })
+        return {"registered": False}
+    except Exception:
+        log.exception("Could not unregister push token")
+        raise HTTPException(status_code=503, detail="Push token removal failed")
 
 
 @app.post("/notifications/{notification_id}/read")

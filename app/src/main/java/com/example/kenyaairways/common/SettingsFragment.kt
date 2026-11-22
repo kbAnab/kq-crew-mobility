@@ -10,6 +10,7 @@ import androidx.fragment.app.Fragment
 import com.example.kenyaairways.MainActivity
 import com.example.kenyaairways.databinding.FragmentSettingsBinding
 import com.google.firebase.auth.FirebaseAuth
+import com.example.kenyaairways.notifications.PushNotifications
 
 class SettingsFragment : Fragment() {
 
@@ -25,10 +26,17 @@ class SettingsFragment : Fragment() {
     override fun onViewCreated(view: View, s: Bundle?) {
         val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
 
-        // The switches are stored here; scheduling real reminders is a later step.
-        b.swPush.isChecked = prefs.getBoolean("push", true)
+        b.swPush.isChecked = PushNotifications.isEnabled(requireContext())
         b.swReminder.isChecked = prefs.getBoolean("duty_reminder", true)
-        b.swPush.setOnCheckedChangeListener { _, on -> prefs.edit().putBoolean("push", on).apply() }
+        b.swPush.setOnCheckedChangeListener { _, on ->
+            if (on && android.os.Build.VERSION.SDK_INT >= 33 &&
+                !PushNotifications.canPostNotifications(requireContext())
+            ) {
+                (activity as? MainActivity)?.requestNotificationPermission()
+            } else {
+                PushNotifications.setEnabled(requireContext(), on)
+            }
+        }
         b.swReminder.setOnCheckedChangeListener { _, on -> prefs.edit().putBoolean("duty_reminder", on).apply() }
 
         val email = FirebaseAuth.getInstance().currentUser?.email
@@ -48,5 +56,10 @@ class SettingsFragment : Fragment() {
     }
 
     override fun onResume() { super.onResume(); (activity as? MainActivity)?.setScreenTitle("Settings") }
+
+    fun reflectPushPermissionResult(granted: Boolean) {
+        if (_b != null) b.swPush.isChecked = granted
+    }
+
     override fun onDestroyView() { super.onDestroyView(); _b = null }
 }

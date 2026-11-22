@@ -197,6 +197,40 @@ object RecommendationApi {
         }
     }
 
+    fun registerInstallationId(installationId: String, onResult: (Result<Unit>) -> Unit = {}) {
+        withToken(onResult) { token ->
+            postAction(token, "/devices/token", JSONObject().put("installation_id", installationId))
+        }
+    }
+
+    fun unregisterInstallationId(installationId: String, onResult: (Result<Unit>) -> Unit = {}) {
+        withToken(onResult) { token ->
+            val endpoint = URL(baseUrl.trimEnd('/') + "/devices/token")
+            require(endpoint.protocol == "https" ||
+                    (endpoint.protocol == "http" && endpoint.host in setOf("10.0.2.2", "localhost"))) {
+                "The recommendation service must use HTTPS outside the local emulator."
+            }
+            val connection = endpoint.openConnection() as HttpURLConnection
+            try {
+                connection.requestMethod = "DELETE"
+                connection.connectTimeout = 8000
+                connection.readTimeout = 20000
+                connection.setRequestProperty("Authorization", "Bearer $token")
+                connection.setRequestProperty("Content-Type", "application/json")
+                connection.doOutput = true
+                connection.outputStream.use {
+                    it.write(JSONObject().put("installation_id", installationId).toString().toByteArray(Charsets.UTF_8))
+                }
+                val code = connection.responseCode
+                val stream = if (code in 200..299) connection.inputStream else connection.errorStream
+                val response = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
+                if (code !in 200..299) throw IOException(errorDetail(response) ?: "Service returned HTTP $code")
+            } finally {
+                connection.disconnect()
+            }
+        }
+    }
+
     fun loadReport(kind: String, onResult: (Result<List<Map<String, String>>>) -> Unit) {
         withToken(onResult) { token ->
             val rows = JSONObject(call(token, "/reports/${java.net.URLEncoder.encode(kind, "UTF-8")}", "GET"))
