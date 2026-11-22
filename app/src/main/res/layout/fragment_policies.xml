@@ -1,0 +1,70 @@
+<?xml version="1.0" encoding="utf-8"?>
+<ScrollView xmlns:android="http://schemas.android.com/apk/res/android"
+    xmlns:app="http://schemas.android.com/apk/res-auto"
+    android:layout_width="match_parent" android:layout_height="match_parent">
+    <LinearLayout android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:orientation="vertical" android:padding="16dp">
+
+        <TextView android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:text="Crew allocation rules. The recommender applies these hard limits before ranking crew. Default values are placeholders: replace them with the limits from KCAA regulations and the Operations Manual."
+            android:textColor="@color/text_secondary" android:textSize="13sp"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="20dp" android:text="Domestic flights"
+            android:textColor="@color/primary" android:textStyle="bold"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Maximum duty hours">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etDomDuty"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Minimum rest hours">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etDomRest"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Minimum experience (years)">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etDomExp"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="20dp" android:text="International flights"
+            android:textColor="@color/primary" android:textStyle="bold"/>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Maximum duty hours">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etIntDuty"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Minimum rest hours">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etIntRest"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+        <com.google.android.material.textfield.TextInputLayout
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:hint="Minimum experience (years)">
+            <com.google.android.material.textfield.TextInputEditText android:id="@+id/etIntExp"
+                android:layout_width="match_parent" android:layout_height="wrap_content"
+                android:inputType="numberDecimal"/>
+        </com.google.android.material.textfield.TextInputLayout>
+
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnSave"
+            android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="24dp"
+            android:text="Save rules" app:backgroundTint="@color/primary"/>
+        <com.google.android.material.button.MaterialButton android:id="@+id/btnDefaults"
+            style="@style/Widget.Material3.Button.OutlinedButton"
+            android:layout_width="match_parent" android:layout_height="56dp" android:layout_marginTop="8dp"
+            android:text="Restore defaults"/>
+    </LinearLayout>
+</ScrollView>
