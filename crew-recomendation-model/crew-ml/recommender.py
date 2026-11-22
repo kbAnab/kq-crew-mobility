@@ -74,8 +74,7 @@ class CrewRecommender:
             )
 
         self.model = joblib.load(path)
-        # Keep API inference portable in Windows services and constrained runtimes;
-        # parallel joblib workers are unnecessary for a single-flight request.
+      
         if hasattr(self.model, "set_params"):
             self.model.set_params(model__n_jobs=1)
 

@@ -35,8 +35,7 @@ def get_candidates(db, qualification: str) -> list[dict]:
         if data.get("active", True) is False:
             continue
         data["crew_id"] = doc.id
-        # A crew member already awaiting a scheduler decision is reserved and
-        # cannot receive another simultaneous recommendation.
+       
         if doc.id in pending_ids:
             continue
         candidates.append(data)
