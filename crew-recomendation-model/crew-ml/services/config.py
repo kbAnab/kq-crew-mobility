@@ -16,8 +16,8 @@ CATEGORICAL = ["crew_type", "qualification", "flight_type"]
 NUMERIC = ["experience_years", "flight_hours", "duty_hours", "rest_hours"]
 
 
-def eligible_mask(crew, flight_type, qualification):
-    r = RULES[flight_type]
+def eligible_mask(crew, flight_type, qualification, policy_override=None):
+    r = policy_override or RULES[flight_type]
     return (
         (crew["availability"] == 1)
         & (crew["qualification"] == qualification)

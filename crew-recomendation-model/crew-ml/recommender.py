@@ -74,13 +74,17 @@ class CrewRecommender:
             )
 
         self.model = joblib.load(path)
+      
+        if hasattr(self.model, "set_params"):
+            self.model.set_params(model__n_jobs=1)
 
     def recommend(
         self,
         crew_data: pd.DataFrame,
         flight_type: str,
         required_qualification: str,
-        top_n: int | None = None
+        top_n: int | None = None,
+        policy_override: dict | None = None,
     ) -> pd.DataFrame:
 
         # Validate inputs
@@ -110,7 +114,8 @@ class CrewRecommender:
             eligible_mask(
                 crew_data,
                 flight_type,
-                required_qualification
+                required_qualification,
+                policy_override
             )
         ].copy()
 

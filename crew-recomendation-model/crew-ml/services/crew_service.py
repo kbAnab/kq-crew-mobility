@@ -20,6 +20,14 @@ def get_candidates(db, qualification: str) -> list[dict]:
     dutyHours, restHours, available, active.
     Only active crew with the required qualification are returned.
     """
+    pending_ids = set()
+    for request in db.collection("assignments").where(
+        filter=FieldFilter("status", "==", "pending")
+    ).stream():
+        crew_id = (request.to_dict() or {}).get("crewId")
+        if crew_id:
+            pending_ids.add(str(crew_id))
+
     query = db.collection("crew").where(filter=FieldFilter("qualification", "==", qualification))
     candidates = []
     for doc in query.stream():
@@ -27,5 +35,8 @@ def get_candidates(db, qualification: str) -> list[dict]:
         if data.get("active", True) is False:
             continue
         data["crew_id"] = doc.id
+       
+        if doc.id in pending_ids:
+            continue
         candidates.append(data)
     return candidates

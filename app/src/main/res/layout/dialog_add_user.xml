@@ -1,0 +1,30 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android"
+    android:layout_width="match_parent" android:layout_height="wrap_content"
+    android:orientation="vertical" android:paddingHorizontal="24dp" android:paddingTop="8dp">
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content" android:hint="Full name">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etName"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:inputType="textPersonName"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <com.google.android.material.textfield.TextInputLayout
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:layout_marginTop="8dp" android:hint="Email">
+        <com.google.android.material.textfield.TextInputEditText android:id="@+id/etEmail"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:inputType="textEmailAddress"/>
+    </com.google.android.material.textfield.TextInputLayout>
+
+    <RadioGroup android:id="@+id/rgRole" android:layout_width="match_parent"
+        android:layout_height="wrap_content" android:layout_marginTop="8dp" android:orientation="vertical">
+        <RadioButton android:id="@+id/rbCrew" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:checked="true" android:text="Flight Crew"/>
+        <RadioButton android:id="@+id/rbController" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="Crew Controller"/>
+        <RadioButton android:id="@+id/rbManager" android:layout_width="wrap_content"
+            android:layout_height="wrap_content" android:text="Manager"/>
+    </RadioGroup>
+</LinearLayout>

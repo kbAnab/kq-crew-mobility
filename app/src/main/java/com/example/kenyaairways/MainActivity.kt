@@ -10,6 +10,7 @@ import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
+import android.widget.Toast
 import com.example.kenyaairways.auth.LoginFragment
 import com.example.kenyaairways.common.*
 import com.example.kenyaairways.crewcontroller.*
@@ -21,6 +22,7 @@ import com.google.firebase.auth.FirebaseAuth
 import androidx.core.view.ViewCompat
 import androidx.core.view.WindowInsetsCompat
 import androidx.core.view.isVisible
+
 class MainActivity : AppCompatActivity() {
 
     // Represents one item in the bottom navigation.
@@ -42,6 +44,7 @@ class MainActivity : AppCompatActivity() {
         private const val M_USERS = 104
         private const val M_LOGOUT = 105
     }
+
 
     override fun onCreate(savedInstanceState: Bundle?) {
         enableEdgeToEdge()
@@ -148,6 +151,10 @@ class MainActivity : AppCompatActivity() {
     // Open a screen on top of the current screen.
     // This adds the screen to the back stack.
     fun open(fragment: Fragment, title: String) {
+        if (!canAccess(fragment)) {
+            Toast.makeText(this, "Your account is not authorized to open this screen.", Toast.LENGTH_SHORT).show()
+            return
+        }
         supportFragmentManager.beginTransaction()
             .replace(R.id.container, fragment)
             .addToBackStack(null)
@@ -290,6 +297,28 @@ class MainActivity : AppCompatActivity() {
                     ReportsFragment()
                 }
             )
+
+            Role.ADMIN -> listOf(
+                Dest("Dashboard", R.drawable.ic_home) { DashboardFragment() },
+                Dest("User Management", R.drawable.ic_group) { UserManagementFragment() },
+                Dest("Performance", R.drawable.ic_chart) { PerformanceFragment() },
+                Dest("Compliance", R.drawable.ic_check) { ComplianceFragment() },
+                Dest("Reports", R.drawable.ic_book) { ReportsFragment() }
+            )
+        }
+    }
+
+    private fun canAccess(fragment: Fragment): Boolean {
+        val role = Session.user?.role ?: return false
+        return when (fragment) {
+            is CrewAllocationFragment, is AIRecommendationsFragment,
+            is AssignmentApprovalFragment, is AlertsFragment -> role == Role.CREW_CONTROLLER
+            is UserManagementFragment -> role == Role.ADMIN
+            is PerformanceFragment, is ComplianceFragment, is ReportsFragment,
+            is PoliciesFragment -> role == Role.MANAGER || role == Role.ADMIN
+            is MyScheduleFragment, is AvailabilityFragment,
+            is AssignmentDetailsFragment -> role == Role.FLIGHT_CREW
+            else -> true
         }
     }
 
@@ -343,8 +372,7 @@ class MainActivity : AppCompatActivity() {
             "Settings"
         )
 
-        // Manager-only options.
-        if (user.role == Role.MANAGER) {
+        if (user.role == Role.MANAGER || user.role == Role.ADMIN) {
 
             menu.add(
                 Menu.NONE,
@@ -353,13 +381,8 @@ class MainActivity : AppCompatActivity() {
                 "Policies"
             )
 
-            menu.add(
-                Menu.NONE,
-                M_USERS,
-                4,
-                "User Management"
-            )
         }
+        if (user.role == Role.ADMIN) menu.add(Menu.NONE, M_USERS, 4, "User Management")
 
         menu.add(
             Menu.NONE,
@@ -372,6 +395,10 @@ class MainActivity : AppCompatActivity() {
     }
 
     override fun onOptionsItemSelected(item: MenuItem): Boolean {
+
+        val role = Session.user?.role ?: run { showLogin(); return true }
+        if (item.itemId == M_USERS && role != Role.ADMIN) return true
+        if (item.itemId == M_POLICIES && role != Role.MANAGER && role != Role.ADMIN) return true
 
         when (item.itemId) {
 

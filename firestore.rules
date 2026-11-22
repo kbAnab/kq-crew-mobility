@@ -1,0 +1,114 @@
+rules_version = '2';
+service cloud.firestore {
+  match /databases/{database}/documents {
+    function signedIn() {
+      return request.auth != null;
+    }
+
+    function profile(uid) {
+      return get(/databases/$(database)/documents/users/$(uid)).data;
+    }
+
+    function hasRole(role) {
+      return signedIn()
+        && profile(request.auth.uid).active == true
+        && profile(request.auth.uid).role == role;
+    }
+
+    function scheduler() { return hasRole('CREW_CONTROLLER'); }
+    function manager() { return hasRole('MANAGER'); }
+    function administrator() { return hasRole('ADMIN'); }
+    function operationalReader() { return scheduler() || manager() || administrator(); }
+
+    match /users/{uid} {
+      allow create: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasAll(['name', 'email', 'role', 'active', 'createdAt'])
+        && request.resource.data.keys().hasOnly(['name', 'email', 'role', 'active', 'createdAt', 'requestedRole'])
+        && request.resource.data.name is string
+        && request.resource.data.name.size() > 0
+        && request.resource.data.email == request.auth.token.email
+        && request.resource.data.role == 'FLIGHT_CREW'
+        && request.resource.data.active == true
+        && request.resource.data.createdAt is timestamp
+        && (!('requestedRole' in request.resource.data)
+          || request.resource.data.requestedRole in ['FLIGHT_CREW', 'CREW_CONTROLLER', 'MANAGER', 'ADMIN']);
+
+      allow get: if signedIn() && (request.auth.uid == uid || operationalReader());
+      allow list: if operationalReader();
+
+      // Only an already provisioned administrator may change roles or account access.
+      allow update: if administrator()
+        && request.resource.data.diff(resource.data).affectedKeys()
+          .hasOnly(['name', 'email', 'role', 'active', 'requestedRole', 'updatedAt'])
+        && request.resource.data.role in ['FLIGHT_CREW', 'CREW_CONTROLLER', 'MANAGER', 'ADMIN']
+        && request.resource.data.active is bool
+        && (request.auth.uid != uid
+          || (request.resource.data.role == 'ADMIN' && request.resource.data.active == true));
+      allow delete: if administrator();
+
+      match /duties/{dutyId} {
+        allow get, list: if signedIn() && (request.auth.uid == uid || operationalReader());
+        allow create, update, delete: if scheduler() || administrator();
+      }
+    }
+
+    match /availability/{uid} {
+      allow get: if signedIn() && (request.auth.uid == uid || operationalReader());
+      allow list: if operationalReader();
+      allow create, update: if signedIn()
+        && request.auth.uid == uid
+        && request.resource.data.keys().hasOnly(['standby', 'extraDuty', 'swaps', 'updatedAt'])
+        && request.resource.data.standby is bool
+        && request.resource.data.extraDuty is bool
+        && request.resource.data.swaps is bool
+        && request.resource.data.updatedAt is timestamp;
+      allow delete: if request.auth.uid == uid || administrator();
+    }
+
+    match /settings/{settingId} {
+      allow get, list: if operationalReader();
+      allow create, update: if (manager() || administrator())
+        && settingId == 'policies'
+        && request.resource.data.keys().hasOnly(['policies', 'updatedAt', 'updatedBy'])
+        && request.resource.data.updatedBy == request.auth.uid
+        && request.resource.data.updatedAt is timestamp
+        && request.resource.data.policies.keys().hasOnly(['domestic', 'international'])
+        && request.resource.data.policies.keys().hasAll(['domestic', 'international'])
+        && request.resource.data.policies.domestic.keys().hasOnly(['maxDutyHours', 'minRestHours', 'minExperienceYears'])
+        && request.resource.data.policies.domestic.keys().hasAll(['maxDutyHours', 'minRestHours', 'minExperienceYears'])
+        && request.resource.data.policies.international.keys().hasOnly(['maxDutyHours', 'minRestHours', 'minExperienceYears'])
+        && request.resource.data.policies.international.keys().hasAll(['maxDutyHours', 'minRestHours', 'minExperienceYears'])
+        && (request.resource.data.policies.domestic.maxDutyHours is float
+          || request.resource.data.policies.domestic.maxDutyHours is int)
+        && request.resource.data.policies.domestic.maxDutyHours >= 1
+        && request.resource.data.policies.domestic.maxDutyHours <= 12
+        && (request.resource.data.policies.domestic.minRestHours is float
+          || request.resource.data.policies.domestic.minRestHours is int)
+        && request.resource.data.policies.domestic.minRestHours >= 10
+        && request.resource.data.policies.domestic.minRestHours <= 24
+        && request.resource.data.policies.domestic.minExperienceYears is int
+        && request.resource.data.policies.domestic.minExperienceYears >= 1
+        && request.resource.data.policies.domestic.minExperienceYears <= 40
+        && (request.resource.data.policies.international.maxDutyHours is float
+          || request.resource.data.policies.international.maxDutyHours is int)
+        && request.resource.data.policies.international.maxDutyHours >= 1
+        && request.resource.data.policies.international.maxDutyHours <= 11
+        && (request.resource.data.policies.international.minRestHours is float
+          || request.resource.data.policies.international.minRestHours is int)
+        && request.resource.data.policies.international.minRestHours >= 12
+        && request.resource.data.policies.international.minRestHours <= 24
+        && request.resource.data.policies.international.minExperienceYears is int
+        && request.resource.data.policies.international.minExperienceYears >= 3
+        && request.resource.data.policies.international.minExperienceYears <= 40;
+
+      allow delete: if administrator();
+    }
+
+    // No client access is granted to collections whose schema and authorization
+    // requirements are not present in this project.
+    match /{document=**} {
+      allow read, write: if false;
+    }
+  }
+}

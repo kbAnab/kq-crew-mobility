@@ -1,0 +1,21 @@
+<?xml version="1.0" encoding="utf-8"?>
+<LinearLayout xmlns:android="http://schemas.android.com/apk/res/android" xmlns:app="http://schemas.android.com/apk/res-auto" android:layout_width="match_parent" android:layout_height="match_parent"
+    android:orientation="vertical" android:background="@color/screen_bg">
+
+    <com.google.android.material.tabs.TabLayout android:id="@+id/tabs"
+        android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:background="@color/primary" app:tabMode="fixed"
+        app:tabTextColor="#CCFFFFFF" app:tabSelectedTextColor="@color/white"
+        app:tabIndicatorColor="@color/white" app:tabIndicatorHeight="2dp"/>
+
+    <TextView android:id="@+id/tvFlightInfo" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:background="@color/white" android:padding="12dp"
+        android:textColor="@color/text_secondary" android:textSize="13sp"/>
+
+    <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvCrew"
+        android:layout_width="match_parent" android:layout_height="0dp" android:layout_weight="1"/>
+
+    <TextView android:id="@+id/tvEmpty" android:layout_width="match_parent" android:layout_height="wrap_content"
+        android:gravity="center" android:padding="32dp" android:textColor="@color/text_secondary"
+        android:visibility="gone"/>
+</LinearLayout>
