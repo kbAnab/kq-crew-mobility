@@ -156,6 +156,7 @@ def health():
     try:
         get_db().collection("flights").limit(1).get()
     except Exception:
+        log.exception("Firestore health check failed")
         firebase_connected = False
     return {"status": "healthy", "model_loaded": True, "firebase_connected": firebase_connected}
 
