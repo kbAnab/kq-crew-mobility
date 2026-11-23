@@ -1,0 +1,88 @@
+{
+  "accuracy": 0.8971300782705927,
+  "precision": 0.7944862155388471,
+  "recall": 0.6203522504892368,
+  "f1_score": 0.6967032967032967,
+  "roc_auc": 0.9250800978833976,
+  "decision_threshold": 0.5,
+  "test_rows": 2683,
+  "test_flights": 200,
+  "positive_rows": 511,
+  "negative_rows": 2172,
+  "confusion_matrix": {
+    "labels": [
+      "Not assigned",
+      "Assigned"
+    ],
+    "rows_actual_columns_predicted": [
+      [
+        2090,
+        82
+      ],
+      [
+        194,
+        317
+      ]
+    ],
+    "true_negative": 2090,
+    "false_positive": 82,
+    "false_negative": 194,
+    "true_positive": 317
+  },
+  "dataset": "data\\crew_assignments.csv",
+  "model": "models\\crew_recommender.pkl",
+  "evaluation_note": "Metrics use the synthetic labelled dataset and a held-out flight-group split; they are not operational validation.",
+  "dataset_distribution": {
+    "total_rows": 30000,
+    "total_flights": 1000,
+    "eligibility": {
+      "Ineligible": 16425,
+      "Eligible": 13575
+    },
+    "assignment_label_among_eligible": {
+      "Not assigned": 11034,
+      "Assigned": 2541
+    },
+    "flight_type_among_eligible": {
+      "Domestic": 10076,
+      "International": 3499
+    },
+    "crew_qualification_among_eligible": {
+      "Cabin Crew": 7017,
+      "Captain": 3460,
+      "First Officer": 3098
+    },
+    "required_qualification_among_eligible": {
+      "Cabin Crew": 7017,
+      "Captain": 3460,
+      "First Officer": 3098
+    },
+    "eligible_feature_summary": {
+      "experience_years": {
+        "mean": 13.437863720073665,
+        "median": 12.0,
+        "min": 1.0,
+        "max": 30.0
+      },
+      "flight_hours": {
+        "mean": 6727.685082872928,
+        "median": 5907.0,
+        "min": 366.0,
+        "max": 19452.0
+      },
+      "duty_hours": {
+        "mean": 5.049911602209944,
+        "median": 4.67,
+        "min": 0.0,
+        "max": 11.99
+      },
+      "rest_hours": {
+        "mean": 13.610781583793738,
+        "median": 13.33,
+        "min": 10.0,
+        "max": 24.0
+      }
+    },
+    "note": "This is the project's synthetic dataset. Eligibility counts include all rows; other distributions and numeric summaries use eligible rows."
+  }
+}
