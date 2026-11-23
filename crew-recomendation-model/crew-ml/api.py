@@ -80,13 +80,18 @@ class InstallationRequest(BaseModel):
 # ---------------------------------------
 
 def verify_active_user(authorization: str = Header(...)) -> str:
+    authorization = authorization.strip()
     if not authorization.startswith("Bearer "):
         raise HTTPException(status_code=401, detail="Missing Firebase authentication token")
 
-    token = authorization.split(" ", 1)[1]
+    token = authorization.split(" ", 1)[1].strip()
+    if not token:
+        raise HTTPException(status_code=401, detail="Missing Firebase authentication token")
     try:
         uid = auth.verify_id_token(token)["uid"]
-    except Exception:
+    except Exception as error:
+        # Record the SDK error class for diagnosis, but never log the bearer token.
+        log.warning("Firebase ID token verification failed (%s)", type(error).__name__)
         raise HTTPException(status_code=401, detail="Invalid or expired Firebase token")
 
     try:

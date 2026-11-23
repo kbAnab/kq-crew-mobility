@@ -21,6 +21,8 @@ import java.util.concurrent.Executors
 
 object RecommendationApi {
 
+    private class BackendHttpException(val statusCode: Int, message: String) : IOException(message)
+
     var baseUrl = "http://10.0.2.2:8000"
     private val executor = Executors.newSingleThreadExecutor()
     private val mainHandler = Handler(Looper.getMainLooper())
@@ -224,7 +226,9 @@ object RecommendationApi {
                 val code = connection.responseCode
                 val stream = if (code in 200..299) connection.inputStream else connection.errorStream
                 val response = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
-                if (code !in 200..299) throw IOException(errorDetail(response) ?: "Service returned HTTP $code")
+                if (code !in 200..299) {
+                    throw BackendHttpException(code, errorDetail(response) ?: "Service returned HTTP $code")
+                }
             } finally {
                 connection.disconnect()
             }
@@ -255,14 +259,48 @@ object RecommendationApi {
             return
         }
         user.getIdToken(false).addOnCompleteListener { task ->
+            if (!task.isSuccessful) {
+                onResult(Result.failure(task.exception ?: IOException("Could not get a sign-in token")))
+                return@addOnCompleteListener
+            }
             val token = task.result?.token
-            if (!task.isSuccessful || token == null) {
+            if (token.isNullOrBlank()) {
                 onResult(Result.failure(IOException("Could not get a sign-in token")))
                 return@addOnCompleteListener
             }
             executor.execute {
                 val result = runCatching { action(token) }
-                mainHandler.post { onResult(result) }
+                val unauthorized = result.exceptionOrNull() as? BackendHttpException
+                if (unauthorized?.statusCode == 401) {
+                    // Firebase normally refreshes expired tokens automatically. Retry one
+                    // backend 401 with a forced refresh to recover from a stale cached token.
+                    user.getIdToken(true).addOnCompleteListener { refreshTask ->
+                        if (!refreshTask.isSuccessful) {
+                            val failure = Result.failure<T>(
+                                refreshTask.exception ?: IOException("Could not refresh the Firebase sign-in token")
+                            )
+                            mainHandler.post { onResult(failure) }
+                        } else if (FirebaseAuth.getInstance().currentUser?.uid != user.uid) {
+                            mainHandler.post {
+                                onResult(Result.failure(IllegalStateException("The signed-in account changed")))
+                            }
+                        } else {
+                            val refreshedToken = refreshTask.result?.token
+                            if (refreshedToken.isNullOrBlank()) {
+                                mainHandler.post {
+                                    onResult(Result.failure(IOException("Could not refresh the Firebase sign-in token")))
+                                }
+                            } else {
+                                executor.execute {
+                                    val retryResult = runCatching { action(refreshedToken) }
+                                    mainHandler.post { onResult(retryResult) }
+                                }
+                            }
+                        }
+                    }
+                } else {
+                    mainHandler.post { onResult(result) }
+                }
             }
         }
     }
@@ -287,7 +325,9 @@ object RecommendationApi {
             val code = connection.responseCode
             val stream = if (code in 200..299) connection.inputStream else connection.errorStream
             val text = stream?.bufferedReader()?.use { it.readText() }.orEmpty()
-            if (code !in 200..299) throw IOException(errorDetail(text) ?: "Service returned HTTP $code")
+            if (code !in 200..299) {
+                throw BackendHttpException(code, errorDetail(text) ?: "Service returned HTTP $code")
+            }
             return text
         } finally {
             connection.disconnect()
