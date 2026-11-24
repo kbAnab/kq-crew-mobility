@@ -15,6 +15,13 @@
             android:layout_marginTop="4dp" android:text="Duty reminders"/>
 
         <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
+            android:layout_marginTop="24dp" android:text="Appearance"
+            android:textColor="@color/primary" android:textStyle="bold"/>
+        <com.google.android.material.materialswitch.MaterialSwitch android:id="@+id/swNightMode"
+            android:layout_width="match_parent" android:layout_height="wrap_content"
+            android:layout_marginTop="8dp" android:text="Night mode"/>
+
+        <TextView android:layout_width="wrap_content" android:layout_height="wrap_content"
             android:layout_marginTop="24dp" android:text="Account"
             android:textColor="@color/primary" android:textStyle="bold"/>
         <TextView android:id="@+id/tvAccount" android:layout_width="wrap_content"
