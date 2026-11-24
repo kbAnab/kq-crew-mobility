@@ -7,6 +7,7 @@ import android.view.View
 import android.view.ViewGroup
 import android.widget.Toast
 import androidx.fragment.app.Fragment
+import androidx.appcompat.app.AppCompatDelegate
 import com.example.kenyaairways.MainActivity
 import com.example.kenyaairways.databinding.FragmentSettingsBinding
 import com.google.firebase.auth.FirebaseAuth
@@ -25,6 +26,15 @@ class SettingsFragment : Fragment() {
     @Suppress("DEPRECATION")
     override fun onViewCreated(view: View, s: Bundle?) {
         val prefs = requireContext().getSharedPreferences("settings", Context.MODE_PRIVATE)
+
+        b.swNightMode.isChecked = prefs.getBoolean("night_mode", false)
+        b.swNightMode.setOnCheckedChangeListener { _, enabled ->
+            prefs.edit().putBoolean("night_mode", enabled).apply()
+            AppCompatDelegate.setDefaultNightMode(
+                if (enabled) AppCompatDelegate.MODE_NIGHT_YES
+                else AppCompatDelegate.MODE_NIGHT_NO
+            )
+        }
 
         b.swPush.isChecked = PushNotifications.isEnabled(requireContext())
         b.swReminder.isChecked = prefs.getBoolean("duty_reminder", true)

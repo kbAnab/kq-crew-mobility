@@ -17,6 +17,6 @@
 
     <com.google.android.material.bottomnavigation.BottomNavigationView android:id="@+id/bottomNav"
         android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:background="@color/white" app:labelVisibilityMode="labeled"
+        android:background="@color/surface" app:labelVisibilityMode="labeled"
         app:itemIconTint="@color/nav_item" app:itemTextColor="@color/nav_item"/>
 </LinearLayout>

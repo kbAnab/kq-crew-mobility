@@ -9,7 +9,7 @@
         app:tabIndicatorColor="@color/white" app:tabIndicatorHeight="2dp"/>
 
     <TextView android:id="@+id/tvFlightInfo" android:layout_width="match_parent" android:layout_height="wrap_content"
-        android:background="@color/white" android:padding="12dp"
+        android:background="@color/surface" android:padding="12dp"
         android:textColor="@color/text_secondary" android:textSize="13sp"/>
 
     <androidx.recyclerview.widget.RecyclerView android:id="@+id/rvCrew"

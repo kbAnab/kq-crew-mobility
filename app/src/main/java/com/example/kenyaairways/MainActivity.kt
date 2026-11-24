@@ -8,6 +8,7 @@ import android.view.View
 import android.view.ViewGroup
 import androidx.activity.enableEdgeToEdge
 import androidx.appcompat.app.AppCompatActivity
+import androidx.appcompat.app.AppCompatDelegate
 import androidx.fragment.app.Fragment
 import androidx.fragment.app.FragmentManager
 import android.widget.Toast
@@ -62,6 +63,12 @@ class MainActivity : AppCompatActivity() {
 
 
     override fun onCreate(savedInstanceState: Bundle?) {
+        val nightModeEnabled = getSharedPreferences("settings", MODE_PRIVATE)
+            .getBoolean("night_mode", false)
+        AppCompatDelegate.setDefaultNightMode(
+            if (nightModeEnabled) AppCompatDelegate.MODE_NIGHT_YES
+            else AppCompatDelegate.MODE_NIGHT_NO
+        )
         enableEdgeToEdge()
         super.onCreate(savedInstanceState)
 
